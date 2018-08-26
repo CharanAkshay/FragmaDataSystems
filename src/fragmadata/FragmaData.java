@@ -2,7 +2,6 @@ package fragmadata;
 
 import java.util.*;
 import java.io.*;
-
 import java.util.ArrayList;
 
 public class FragmaData {
@@ -68,52 +67,84 @@ public class FragmaData {
                         totalScore2 = totalScore2 + deliveriesData[j][5];
                     }
                     deliveriesData[j][11] =  Integer.parseInt(arr[i][0]);
-                    //System.out.println("i: "  + i + " , Year: " + deliveriesData[i][11]);
                 }                  
             }
-            
-            //System.out.println("i: "  + i + " , Year: " + deliveriesData.length);
-            //System.out.println("\nYear: " + arr[i][0] + "\nTeamName: " + arr[i][1] + " , Fours:  " + fours1 + " , Sixes: " + sixes1 + " , TotalScore: " + totalScore1);                    
-            //System.out.println("TeamName: " + arr[i][2] +" , Fours:  " + fours2 + " , Sixes: " + sixes2 + " , TotalScore: " + totalScore2);           
+            System.out.println("\nYear: " + arr[i][0] + "\nTeamName: " + arr[i][1] + " , Fours:  " + fours1 + " , Sixes: " + sixes1 + " , TotalScore: " + totalScore1);                    
+            System.out.println("TeamName: " + arr[i][2] +" , Fours:  " + fours2 + " , Sixes: " + sixes2 + " , TotalScore: " + totalScore2);           
         }
-        //System.out.println("i: "  + i + " , Year: " + deliveriesData[150460][5]);
     }
     
     static void bestEconomy(List<String>uniqueBowlingTeam, int[][] deliveriesData,int deliveriesRowCount, List<String> uniqueYear) {
         int i,k,j = 0;
         int uniqueBowlingTeamLen = uniqueBowlingTeam.size();
-        
+        // Array to store Year economy rate, Bowler Index
+        float[][] economyRateDataResult = new float[uniqueBowlingTeamLen][3];
         int[][] economyRateData1 = new int[uniqueBowlingTeamLen][5];
         HashMap<Integer, Integer> economyRateData = new HashMap<>();
         HashMap<Integer, Integer> economyRateDataYear = new HashMap<>();
         HashMap<Integer, Integer> oversBowled = new HashMap<>();
         
         int Year;
-        //System.out.println(" , Year: " + deliveriesData[134][11]);
         for(i=1;i<uniqueYear.size();i++) {
             Year = Integer.parseInt(uniqueYear.get(i));
-            //System.out.println("Year: " + Year);
             for(j = 1; j < deliveriesRowCount; j++) {
                 if(Year == deliveriesData[j][11]) {
+                    // key is from uniqueTeamBowler List
                     int key = deliveriesData[j][10];
+                    
                     int value = deliveriesData[j][7] + deliveriesData[j][4] +
                             deliveriesData[j][6] + deliveriesData[j][8] + deliveriesData[j][9];
+                    
                     value = value + (economyRateData.get(key) == null ? 0 : economyRateData.get(key));
+                    
+                    int NballBowled;
+                    NballBowled = (oversBowled.get(key) == null ? 0 : oversBowled.get(key)) + 1;
                     economyRateData.put(key,value);
                     economyRateDataYear.put(key, Year);
+                    oversBowled.put(key, NballBowled);
                 }
             }
-            System.out.println("Year: " + Year);
-            for(k=0;k<economyRateData.size();k++) {
-                if(economyRateData.get(k) != 0) {
-                    System.out.println("k: "+ k + " , Player Name: " + uniqueBowlingTeam.get(k) + " , Runs Given: " + economyRateData.get(k));
+                for(j = 0; j < economyRateDataYear.size(); j++) {
+                    float economyRate;
+                    if(Year == economyRateDataYear.get(j)) {
+                        economyRate = oversBowled.get(j)/6;
+                        economyRate = economyRateData.get(j)/economyRate;
+//                        System.out.println("k: "+ j + " , Year: " + Year + " , Player Name: " + uniqueBowlingTeam.get(j) +
+//                            " , Economy Rate: " + economyRate + " , Overs: " + oversBowled.get(j)/6);
+                        if((oversBowled.get(j)/6) > 10) {
+                            economyRateDataResult[j][0] = Year;
+                            economyRateDataResult[j][1] = j;
+                            economyRateDataResult[j][2] = economyRate;
+                        }
+                    }
                 }
-            }
-            //economyRateData.clear();
+//            }
+            economyRateData.clear();
+            oversBowled.clear();
+            
         }
         
-        //System.out.println("economyRateData: " + economyRateData);
-        //System.out.println("uniqueBowlingTeam: " + uniqueBowlingTeam.size());
+        // sorting Economy Result Data Set
+        Arrays.sort(economyRateDataResult, new java.util.Comparator<float[]>() {
+            public int compare(float[] a, float[] b) {
+                return Double.compare(a[2], b[2]);
+            }
+        });
+        // initialized to get top10 players for an year
+         int top10;
+        for(i=1; i < uniqueYear.size(); i++) {
+            Year = Integer.parseInt(uniqueYear.get(i));
+            top10 = 1;
+            System.out.print("******************Year: " + Year + "***********************\n");
+            for(j = economyRateDataResult.length - 1; j >= 0;j--) {
+                if(Year == economyRateDataResult[j][0] && top10 <= 10) {
+                    top10++;
+                    int index = Math.round(economyRateDataResult[j][1]);
+                    System.out.println("Year: " + Year + " , Player: " + uniqueBowlingTeam.get(index) + " , Economy: " + economyRateDataResult[j][2]);
+                }
+            }
+            System.out.println("");
+        }
     }
     public static void main(String[] args) throws FileNotFoundException, IOException{
         String line;
@@ -285,11 +316,10 @@ public class FragmaData {
             }                      
         }
         
-        System.out.println("Second Question\n");
+        System.out.println("Second Question");
         analyzeScore(deliveriesData, deliveriesRowCount, coun, uniqueTeam, arr);
         
-        //System.out.println(" , Year: " + deliveriesData[134][11]);
-//        System.out.println("k: " + deliveriesData[150457][11]);
+        System.out.println("\nThird Question\n");
         bestEconomy(uniqueBowlingTeam, deliveriesData, deliveriesRowCount, uniqueYear);
     }  
 }
